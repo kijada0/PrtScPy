@@ -1,4 +1,3 @@
-import os
 import cv2
 import imutils
 import numpy as np
@@ -6,54 +5,71 @@ import pyautogui
 import time
 from datetime import datetime
 import winsound
-import matplotlib.pyplot as pl
 
-flag = False
-
-#dir = "pictures/"
+#   --------------- CONFIG ---------------
 dir = "C:/Users/kijada/Pictures/PrtPsPy/"
-#reg = (130, 80, 1660, 950)
-#reg = (0, 0, 1920, 1080)
-reg = (430, 240, 1040, 720)
+start = (130, 80)       # screenshot start point
+size = (1660, 950)      # screenshot size
+height = 512            # resize height
 
-pic1 = cv2.cvtColor(np.array(pyautogui.screenshot(region=reg)), cv2.COLOR_RGB2BGR)
+#   --------------- VARIBLE ---------------
+reg = start + size
+current = cv2.cvtColor(np.array(np.zeros([size[1], size[0]], np.uint8)), cv2.COLOR_RGB2BGR)
 
-while True:
-    pic0 = pic1
-    pic1 = cv2.cvtColor(np.array(pyautogui.screenshot(region=reg)), cv2.COLOR_RGB2BGR)
+#   --------------- COMPARISON ---------------
+def comparison(old, new):
+    global h
+    old = imutils.resize(old.copy(), height=height)
+    new = imutils.resize(new.copy(), height=height)
 
-    pic0a = imutils.resize(pic0, height=320)
-    pic1a = imutils.resize(pic1, height=320)
-
-    diff = pic0a.copy()
-    cv2.absdiff(pic0a, pic1a, diff)
+    diff = new.copy()
+    cv2.absdiff(old, new, diff)
 
     diff = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
     for i in range(3):
-        diff = cv2.dilate(diff, None, iterations=1+i)
+        diff = cv2.dilate(diff, None, iterations=1 + i)
 
     (T, thresh) = cv2.threshold(diff, 3, 255, cv2.THRESH_BINARY)
-    cnts = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    cnts = imutils.grab_contours(cnts)
+    box = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    box = imutils.grab_contours(box)
 
-    for c in cnts:
+    return(box)
+
+#   --------------- MAKR CHANGES ---------------
+def mark(image, tags):
+    image = imutils.resize(image, height=height)
+    for c in tags:
         (x, y, w, h) = cv2.boundingRect(c)
-        cv2.rectangle(pic1a, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
-    cv2.imshow("Marked differences" , pic1a)
-    print("number of differences", len(cnts))
+    cv2.imshow("Marked changes", image)
+    print("number of differences", len(tags))
 
-    if len(cnts) > 20:
-        flag = True
+#   --------------- SAVE IMAGE ---------------
+ready = False
+def save(changes):
+    global ready
+    global current
+    if changes > 20:
+        ready = True
         time.sleep(1)
 
-    if len(cnts) < 5 and flag:
-        flag = False
-        pic_name = "screenshot_" + datetime.now().strftime("%H-%M-%S_%d-%m-%Y") + ".png"
-        cv2.imwrite(dir + pic_name, pic1)
-        winsound.PlaySound("*", winsound.SND_ALIAS)
+    if changes < 5 and ready:
+        ready = False
+        image_name = "screenshot_" + datetime.now().strftime("%H-%M-%S_%d-%m-%Y") + ".png"
+        cv2.imwrite(dir + image_name, current)
         print("Image saved")
+        winsound.PlaySound("*", winsound.SND_ALIAS)
         time.sleep(1)
+
+#   --------------- MAIN LOOP ---------------
+while True:
+    last = current
+    current = cv2.cvtColor(np.array(pyautogui.screenshot(region=reg)), cv2.COLOR_RGB2BGR)
+
+    differences = comparison(current, last)
+    mark(current, differences)
+    save(len(differences))
 
     cv2.waitKey(1)
     time.sleep(1)
