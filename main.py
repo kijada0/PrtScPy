@@ -4,10 +4,11 @@ import numpy as np
 import pyautogui
 import time
 from datetime import datetime
-import winsound
+from playsound import playsound
 
 #   --------------- CONFIG ---------------
-dir = "C:/Users/kijada/Pictures/PrtPsPy/"
+dir = "C:/Users/kijada/Pictures/PrtPsPy/"#
+sound = 'D:\Documents\PythonProject\PrtScPy\sound\swiftly-610.wav'
 start = (130, 80)       # screenshot start point
 size = (1660, 950)      # screenshot size
 height = 512            # resize height
@@ -16,9 +17,13 @@ height = 512            # resize height
 reg = start + size
 current = cv2.cvtColor(np.array(np.zeros([size[1], size[0]], np.uint8)), cv2.COLOR_RGB2BGR)
 
+#   --------------- BLURRING ---------------
+def blur(image, level):
+    return(cv2.blur(image,(level, level)))
+
+
 #   --------------- COMPARISON ---------------
 def comparison(old, new):
-    global h
     old = imutils.resize(old.copy(), height=height)
     new = imutils.resize(new.copy(), height=height)
 
@@ -50,7 +55,7 @@ ready = False
 def save(changes):
     global ready
     global current
-    if changes > 20:
+    if changes > 10:
         ready = True
         time.sleep(1)
 
@@ -59,7 +64,7 @@ def save(changes):
         image_name = "screenshot_" + datetime.now().strftime("%H-%M-%S_%d-%m-%Y") + ".png"
         cv2.imwrite(dir + image_name, current)
         print("Image saved")
-        winsound.PlaySound("*", winsound.SND_ALIAS)
+        playsound(sound)
         time.sleep(1)
 
 #   --------------- MAIN LOOP ---------------
@@ -71,5 +76,6 @@ while True:
     mark(current, differences)
     save(len(differences))
 
-    cv2.waitKey(1)
     time.sleep(1)
+    cv2.waitKey(1)
+
