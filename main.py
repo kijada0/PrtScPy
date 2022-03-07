@@ -6,11 +6,15 @@ import pyautogui
 import time
 from datetime import datetime
 import winsound
+import matplotlib.pyplot as pl
 
 flag = False
 
-dir = "pictures/"
-reg = (130, 80, 1660, 950)
+#dir = "pictures/"
+dir = "C:/Users/kijada/Pictures/PrtPsPy/"
+#reg = (130, 80, 1660, 950)
+#reg = (0, 0, 1920, 1080)
+reg = (430, 240, 1040, 720)
 
 pic1 = cv2.cvtColor(np.array(pyautogui.screenshot(region=reg)), cv2.COLOR_RGB2BGR)
 
@@ -18,8 +22,8 @@ while True:
     pic0 = pic1
     pic1 = cv2.cvtColor(np.array(pyautogui.screenshot(region=reg)), cv2.COLOR_RGB2BGR)
 
-    pic0a = imutils.resize(pic0, height=512)
-    pic1a = imutils.resize(pic1, height=512)
+    pic0a = imutils.resize(pic0, height=320)
+    pic1a = imutils.resize(pic1, height=320)
 
     diff = pic0a.copy()
     cv2.absdiff(pic0a, pic1a, diff)
@@ -39,13 +43,17 @@ while True:
     cv2.imshow("Marked differences" , pic1a)
     print("number of differences", len(cnts))
 
-    if len(cnts) > 999:
+    if len(cnts) > 20:
+        flag = True
+        time.sleep(1)
+
+    if len(cnts) < 5 and flag:
         flag = False
         pic_name = "screenshot_" + datetime.now().strftime("%H-%M-%S_%d-%m-%Y") + ".png"
         cv2.imwrite(dir + pic_name, pic1)
         winsound.PlaySound("*", winsound.SND_ALIAS)
         print("Image saved")
-        time.sleep(3)
+        time.sleep(1)
 
     cv2.waitKey(1)
     time.sleep(1)
