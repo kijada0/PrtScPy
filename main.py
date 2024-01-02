@@ -1,3 +1,4 @@
+import os
 import cv2
 import imutils
 import numpy as np
@@ -7,23 +8,29 @@ from datetime import datetime
 from playsound import playsound
 
 #   --------------- CONFIG ---------------
-dir = "C:/Users/kijada/Pictures/PrtPsPy/"
-sound = "D:\Documents\PythonProject\PrtScPy\sound\swiftly-610.wav"
-start = (130, 80)       # screenshot start point
-size = (1660, 950)      # screenshot size
-height = 512            # resize height
+
+target_directory = "C:/Users/kijada/Pictures/PrtPsPy/"
+sound_path = "D:\Documents\PythonProject\PrtScPy\sound\swiftly-610.wav"
+
+start = (130, 80)  # screenshot start point
+size = (1660, 950)  # screenshot size
+height = 512  # resize height
 
 #   --------------- VARIBLE ---------------
+
 reg = start + size
 current = cv2.cvtColor(np.array(np.zeros([size[1], size[0]], np.uint8)), cv2.COLOR_RGB2BGR)
 last = cv2.cvtColor(np.array(pyautogui.screenshot(region=reg)), cv2.COLOR_RGB2BGR)
 
+
 #   --------------- BLURRING ---------------
+
 def blur(image, level):
-    return(cv2.blur(image,(level, level)))
+    return cv2.blur(image, (level, level))
 
 
 #   --------------- COMPARISON ---------------
+
 def comparison(old, new):
     old = imutils.resize(old.copy(), height=height)
     new = imutils.resize(new.copy(), height=height)
@@ -41,9 +48,11 @@ def comparison(old, new):
 
     cv2.imshow("Diff", diff)
 
-    return(box)
+    return box
 
-#   --------------- MAKR CHANGES ---------------
+
+#   --------------- MARK CHANGES ---------------
+
 def mark(image, tags):
     image = imutils.resize(image, height=height)
     for c in tags:
@@ -53,8 +62,12 @@ def mark(image, tags):
     cv2.imshow("Marked changes", image)
     print("number of differences", len(tags))
 
+
 #   --------------- SAVE IMAGE ---------------
+
 ready = False
+
+
 def save(changes):
     global ready
     global current
@@ -66,15 +79,28 @@ def save(changes):
     if changes > 5:
         ready = False
         image_name = "screenshot_" + datetime.now().strftime("%H-%M-%S_%d-%m-%Y") + ".png"
-        cv2.imwrite(dir + image_name, current)
+        cv2.imwrite(target_directory + image_name, current)
         print("Image saved")
-        #playsound(sound)
+        play_sound(sound_path)
         last = current
         time.sleep(1)
 
-#   --------------- MAIN LOOP ---------------
-while True:
 
+#   --------------- PLAY SOUND ---------------
+
+def play_sound(path_to_sound):
+    if (path_to_sound == "") or (os.path.isfile(path_to_sound) == False):
+        return
+
+    try:
+        playsound(path_to_sound)
+    except Exception as e:
+        print("Error playing sound, error:", e)
+
+
+#   --------------- MAIN LOOP ---------------
+
+while True:
     current = cv2.cvtColor(np.array(pyautogui.screenshot(region=reg)), cv2.COLOR_RGB2BGR)
 
     differences = comparison(current, last)
@@ -83,4 +109,3 @@ while True:
 
     time.sleep(1)
     cv2.waitKey(1)
-
